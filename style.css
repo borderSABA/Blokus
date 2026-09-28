@@ -40,3 +40,32 @@
   button,.piece{touch-action:manipulation}
   #pieces{-webkit-overflow-scrolling:touch}
 }
+
+/* v0.5.3 definitive smartphone layout */
+@media (max-width:760px){
+  #game{height:calc(100dvh - 42px)!important;min-height:0!important;overflow:hidden!important}
+  #gamebar{height:34px!important}
+  main.gameLayout{
+    height:calc(100dvh - 76px)!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:54px 40px minmax(0,1fr) 126px!important;
+    grid-template-areas:"players" "controls" "board" "pieces"!important;
+    gap:3px!important;padding:3px!important;overflow:hidden!important;
+  }
+  #playerSide{grid-area:players!important;display:block!important;min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;padding:2px!important}
+  #players{display:flex!important;flex-direction:row!important;gap:4px!important;width:max-content!important;min-width:100%!important}
+  #players .player{flex:0 0 108px!important;width:108px!important;min-width:108px!important;height:46px!important;min-height:46px!important;margin:0!important;padding:3px 5px!important;font-size:9px!important;overflow:hidden!important}
+  #pieceSide{display:contents!important}
+  #pieceSide .controls{grid-area:controls!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:0!important;padding:2px 0!important}
+  #pieceSide .controls #rot,#pieceSide .controls #flip,#pieceSide .controls #confirm{display:block!important;height:36px!important;font-size:12px!important}
+  #pieceSide .controls #cancel{display:none!important}
+  #pieceSide>h3{display:none!important}
+  #boardWrap{grid-area:board!important;display:block!important;position:relative!important;min-width:0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
+  #board{position:absolute!important;left:50%!important;top:50%!important;width:min(94vw,560px)!important;height:auto!important;max-width:none!important;margin:0!important;translate:-50% -50%;transform-origin:50% 50%!important}
+  #pieces{grid-area:pieces!important;display:grid!important;grid-auto-flow:column!important;grid-template-rows:repeat(2,58px)!important;grid-auto-columns:70px!important;grid-template-columns:none!important;width:100%!important;min-width:0!important;height:126px!important;overflow-x:auto!important;overflow-y:hidden!important;gap:3px!important;padding:3px!important}
+  #pieces .piece{width:70px!important;height:58px!important;margin:0!important}
+}
+.manualOrder{display:grid;gap:6px;margin-top:6px}
+.manualOrder label{display:grid;grid-template-columns:55px 1fr;align-items:center;gap:6px;font-size:12px;font-weight:800}
+.manualOrder select{min-width:0}
