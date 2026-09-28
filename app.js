@@ -1,9 +1,9 @@
-const SERVER_URL=localStorage.getItem('blokus_server_url')||'http://localhost:8787';
+const SERVER_URL=(window.BLOKUS_CONFIG?.SERVER_URL||'').replace(/\/$/,'');
 const COLORS={blue:'青',yellow:'黄',red:'赤',green:'緑',orange:'橙',purple:'紫'};
 const PIECES=[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,0]],[[0,0],[1,0],[2,0],[3,0]],[[0,0],[0,1],[1,0],[1,1]],[[0,0],[1,0],[2,0],[1,1]],[[0,0],[0,1],[0,2],[1,2]],[[0,0],[1,0],[1,1],[2,1]],[[0,0],[1,0],[2,0],[3,0],[4,0]],[[0,0],[0,1],[0,2],[0,3],[1,3]],[[0,0],[0,1],[0,2],[1,0],[1,1]],[[0,0],[0,1],[1,1],[1,2],[2,2]],[[0,0],[1,0],[2,0],[3,0],[1,1]],[[0,0],[1,0],[2,0],[0,1],[0,2]],[[0,0],[1,0],[1,1],[2,1],[1,2]],[[0,0],[0,1],[1,1],[2,1],[2,2]],[[0,0],[1,0],[2,0],[1,1],[1,2]],[[0,0],[1,0],[2,0],[2,1],[3,1]],[[0,0],[1,0],[1,1],[1,2],[2,2]],[[0,0],[0,1],[1,1],[1,2],[2,1]]];
 let room=null,state=null,token=localStorage.getItem('blokus_token')||crypto.randomUUID(),selected=null,ori=0,flipped=false,hover=null,poll=null;
 const $=s=>document.querySelector(s); const nameEl=$('#name'); nameEl.value=localStorage.getItem('boardgame_player_name')||'';
-async function api(path,opt={}){let r=await fetch(SERVER_URL+path,{headers:{'content-type':'application/json'},...opt});let j=await r.json();if(!r.ok)throw Error(j.error||'通信エラー');return j}
+async function api(path,opt={}){if(!SERVER_URL)throw Error('SERVER_URLが未設定です');let r=await fetch(SERVER_URL+path,{headers:{'content-type':'application/json'},...opt});let j;try{j=await r.json()}catch{throw Error('サーバー応答が不正です')}if(!r.ok)throw Error(j.error||('HTTP '+r.status));return j}
 function toast(s){let e=$('#toast');e.textContent=s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500)}
 async function refreshRooms(){try{let d=await api('/rooms');$('#rooms').innerHTML=d.rooms.map(r=>`<div class="room"><b>ROOM${r.id}</b><small>${r.status}<br>${r.players.join(' / ')||'0人'}</small><button onclick="join(${r.id})">${r.count?'参加':'作成・参加'}</button><button onclick="resetRoom(${r.id})">初期化</button></div>`).join('')}catch(e){$('#msg').textContent='サーバー未接続: '+e.message}}
 window.resetRoom=async id=>{if(!confirm('ROOM'+id+'を初期化しますか？'))return;try{await api('/room/'+id+'/reset',{method:'POST',body:JSON.stringify({name:nameEl.value})});refreshRooms()}catch(e){alert(e.message)}};
