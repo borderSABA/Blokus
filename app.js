@@ -6,7 +6,18 @@ const $=s=>document.querySelector(s); const nameEl=$('#name'); nameEl.value=loca
 function newActionId(){return token+'-'+Date.now().toString(36)+'-'+crypto.randomUUID()} 
 async function api(path,opt={}){if(!SERVER_URL)throw Error('SERVER_URLが未設定です');let r=await fetch(SERVER_URL+path,{headers:{'content-type':'application/json'},...opt});let j;try{j=await r.json()}catch{throw Error('サーバー応答が不正です')}if(!r.ok)throw Error(j.error||('HTTP '+r.status));return j}
 function toast(s){let e=$('#toast');e.textContent=s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500)}
-async function refreshRooms(){try{let d=await api('/rooms'),rooms=Array.isArray(d.rooms)&&d.rooms.length?d.rooms:[1,2,3,4].map(id=>({id,status:'待機中',players:[],count:0}));$('#rooms').innerHTML=rooms.map(r=>`<div class="room"><b>ROOM${r.id}</b><small>${r.status}<br>${r.players.join(' / ')||'0人'}</small><button onclick="join(${r.id})">${r.count?'参加':'作成・参加'}</button><button onclick="resetRoom(${r.id})">初期化</button></div>`).join('')}catch(e){$('#msg').textContent='サーバー未接続: '+e.message}}
+function roomFallbacks(){return [1,2,3,4].map(id=>({id,status:'待機中',players:[],count:0}))}
+function drawRooms(rooms){
+  let box=$('#rooms');if(!box)return;
+  let byId=new Map((Array.isArray(rooms)?rooms:[]).map(r=>[Number(r.id),r]));
+  let fixed=roomFallbacks().map(f=>({...f,...(byId.get(f.id)||{})}));
+  box.innerHTML=fixed.map(r=>`<div class="room"><b>ROOM${r.id}</b><small>${r.status||'待機中'}<br>${Array.isArray(r.players)&&r.players.length?r.players.join(' / '):'0人'}</small><button onclick="join(${r.id})">${r.count?'参加':'作成・参加'}</button><button onclick="resetRoom(${r.id})">初期化</button></div>`).join('');
+}
+async function refreshRooms(){
+  if(!$('#rooms')?.children.length)drawRooms(roomFallbacks());
+  try{let d=await api('/rooms');drawRooms(d.rooms);$('#msg').textContent=''}
+  catch(e){drawRooms(roomFallbacks());$('#msg').textContent='サーバー未接続: '+e.message}
+}
 window.resetRoom=async id=>{if(!confirm('ROOM'+id+'を初期化しますか？'))return;try{await api('/room/'+id+'/reset',{method:'POST',body:JSON.stringify({name:nameEl.value})});refreshRooms()}catch(e){alert(e.message)}};
 window.join=async id=>{let name=nameEl.value.trim();if(!name)return alert('名前を入力してください');try{let d=await api('/room/'+id+'/join',{method:'POST',body:JSON.stringify({name,token})});room=id;localStorage.setItem('blokus_token',token);state=d.state;showRoomLobby();startPoll()}catch(e){alert(e.message)}};
 function hideScreens(){['#lobby','#roomLobby','#game'].forEach(x=>$(x).hidden=true)} function showRoomLobby(){hideScreens();$('#roomLobby').hidden=false;render()} function showGame(){hideScreens();$('#game').hidden=false;render()}
@@ -144,7 +155,7 @@ window.showPlayerPieces=playerToken=>{
 window.closePlayerPieces=()=>{$('#modal').hidden=true};
 function renderResult(){if(!$('#modal').hidden)return;$('#modal').hidden=false;let rows=state.results.map((r,i)=>`<div class="resultRow rank${i+1}"><span class="rank">${i+1}</span><strong>${r.name}</strong><b>${r.score}<small>点</small></b></div>`).join('');$('#modalBody').innerHTML=`<div class="resultCard"><div class="resultEyebrow">GAME RESULT</div><h2>対局終了</h2><div class="resultRows">${rows}</div><div class="resultActions"><button class="subResult" onclick="closeResult()">最終盤面を見る</button><button class="mainResult" onclick="backLobby()">ロビーへ戻る</button></div></div>`}window.closeResult=()=>$('#modal').hidden=true;window.backLobby=async()=>act('backLobby');
 window.leaveRoom=async()=>{try{await act('leave')}catch{}room=null;state=null;clearInterval(poll);hideScreens();$('#lobby').hidden=false;refreshRooms()};$('#leave').onclick=leaveRoom;$('#roomLeave').onclick=leaveRoom;$('#addCpuBtn').onclick=addCpu;$('#startBtn').onclick=startGame;
-refreshRooms();setInterval(()=>{if(!room)refreshRooms()},3000);
+drawRooms(roomFallbacks());refreshRooms();setInterval(()=>{if(!room)refreshRooms()},3000);
 let lastGameTouchEnd=0;
 $('#game').addEventListener('touchend',e=>{
   let now=Date.now();
