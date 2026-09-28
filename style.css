@@ -69,3 +69,40 @@
 .manualOrder{display:grid;gap:6px;margin-top:6px}
 .manualOrder label{display:grid;grid-template-columns:55px 1fr;align-items:center;gap:6px;font-size:12px;font-weight:800}
 .manualOrder select{min-width:0}
+
+/* v0.5.4 smartphone: fixed board, no player horizontal scroll */
+@media (max-width:760px){
+  #playerSide{overflow:hidden!important;width:100%!important}
+  #players{display:grid!important;grid-template-columns:repeat(var(--player-count,4),minmax(0,1fr))!important;gap:3px!important;width:100%!important;min-width:0!important}
+  #players .player{width:auto!important;min-width:0!important;max-width:none!important;overflow:hidden!important;font-size:clamp(7px,2.25vw,10px)!important;padding:3px!important}
+  #boardWrap{display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+  #board{position:static!important;left:auto!important;top:auto!important;translate:none!important;transform:none!important;width:min(96vw,calc(100dvh - 250px))!important;max-width:100%!important;touch-action:manipulation!important;will-change:auto!important}
+  #board .cell{touch-action:manipulation!important}
+  #pieces{touch-action:pan-x!important;overscroll-behavior-x:contain!important}
+  #pieces .piece{touch-action:manipulation!important}
+  #game,#game *{-webkit-tap-highlight-color:transparent}
+}
+
+/* v0.5.5: drag the selected ghost piece, never the board */
+@media (max-width:760px){
+  #board{touch-action:none!important;transform:none!important}
+  #board .cell{touch-action:none!important}
+  #board.draggingPiece{cursor:grabbing}
+}
+
+/* v0.5.6 pin + other player's remaining pieces */
+.boardPin{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50% 50% 50% 0;background:var(--pin-color);border:2px solid #fff;box-shadow:0 1px 4px #0008;transform:translate(-50%,-88%) rotate(-45deg);z-index:8;pointer-events:none}
+.boardPin::after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;left:3.5px;top:3.5px}
+.player{cursor:pointer}.player:focus-visible{outline:3px solid #222}
+#pinBtn.pinActive{outline:3px solid #222;background:#fff3bf}
+.pieceViewer{width:min(620px,92vw);max-height:82dvh;overflow:auto;background:#fff;border-radius:16px;padding:14px}
+.pieceViewerHead{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-14px;background:#fff;padding:10px 0;z-index:2}
+.pieceViewerHead h2{margin:0;font-size:20px}.pieceViewerHead button{min-height:40px;border-radius:8px}
+.viewColor h3{display:flex;align-items:center;gap:7px;margin:12px 0 7px}
+.viewPieceGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.viewPiece{min-height:58px;display:grid;place-items:center;border:1px solid #d8dfe5;border-radius:7px;background:#f7f9fa}
+@media(max-width:760px){
+  #pieceSide .controls{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  #pieceSide .controls #pinBtn{display:block!important;height:36px!important;font-size:12px!important}
+  .viewPieceGrid{grid-template-columns:repeat(4,1fr)}
+}
