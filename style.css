@@ -20,3 +20,7 @@
 .subResult{background:#fff;border:1px solid #bcc7cf;color:#33414d}
 .mainResult{background:#263746!important;color:#fff;border:1px solid #263746!important}
 @media(max-width:520px){.resultCard{padding:18px}.resultCard h2{font-size:23px}.resultActions{grid-template-columns:1fr}.resultRow{padding:9px 10px}}
+
+/* v0.4.8: keep own pieces visible outside the player's turn */
+.piece.waiting{opacity:.58;filter:saturate(.72);cursor:default}
+.pieceColorLabel{grid-column:1/-1;font-size:11px;font-weight:900;padding:3px 5px;margin-top:3px;border-radius:5px;background:#eef2f5}
