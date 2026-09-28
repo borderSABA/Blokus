@@ -24,8 +24,8 @@ function scheduleCpu(){
     try{
       let d=await api('/room/'+room+'/cpu-step',{method:'POST',body:JSON.stringify({turnKey:key})});
       state=d.state;lastRenderSig=stateSig(state);cpuScheduledKey='';render();scheduleCpu()
-    }catch(e){cpuScheduledKey='';toast(e.message);setTimeout(scheduleCpu,1500)}
-  },1500)
+    }catch(e){cpuScheduledKey='';toast(e.message);setTimeout(scheduleCpu,1000)}
+  },1000)
 }
 function myPlayer(){return state?.players.find(p=>p.token===token)}
 function render(){if(!state)return;if(state.phase==='lobby'){if($('#roomLobby').hidden)showRoomLobby();renderWaitingLobby();return}if($('#game').hidden)showGame();let n=state.size;$('#board').style.gridTemplateColumns=`repeat(${n},1fr)`;let startInfo={};for(let t of (state.turns||[])){if((state.used?.[t.color]||[]).length===0){let key=t.start.join(',');startInfo[key]={color:t.color,label:(COLORS[t.color]||t.color)}}}$('#board').innerHTML=state.board.flatMap((row,y)=>row.map((c,x)=>{let si=startInfo[x+','+y];return `<div class="cell ${c||''} ${si?'startMark start-'+si.color:''}" data-start-label="${si?si.label:''}" data-x="${x}" data-y="${y}"></div>`})).join('');
