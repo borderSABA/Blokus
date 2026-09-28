@@ -59,7 +59,7 @@
   #pieceSide{display:contents!important}
   #pieceSide .controls{grid-area:controls!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:0!important;padding:2px 0!important}
   #pieceSide .controls #rot,#pieceSide .controls #flip,#pieceSide .controls #confirm{display:block!important;height:36px!important;font-size:12px!important}
-  #pieceSide .controls #cancel{display:none!important}
+  #pieceSide .controls 
   #pieceSide>h3{display:none!important}
   #boardWrap{grid-area:board!important;display:block!important;position:relative!important;min-width:0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
   #board{position:absolute!important;left:50%!important;top:50%!important;width:min(94vw,560px)!important;height:auto!important;max-width:none!important;margin:0!important;translate:-50% -50%;transform-origin:50% 50%!important}
