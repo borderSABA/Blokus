@@ -1,7 +1,7 @@
 const SERVER_URL=(window.BLOKUS_CONFIG?.SERVER_URL||'').replace(/\/$/,'');
 const COLORS={blue:'青',yellow:'黄',red:'赤',green:'緑',orange:'橙',purple:'紫'};
 const PIECES=[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,0]],[[0,0],[1,0],[2,0],[3,0]],[[0,0],[0,1],[1,0],[1,1]],[[0,0],[1,0],[2,0],[1,1]],[[0,0],[0,1],[0,2],[1,2]],[[0,0],[1,0],[1,1],[2,1]],[[0,0],[1,0],[2,0],[3,0],[4,0]],[[0,0],[0,1],[0,2],[0,3],[1,3]],[[0,0],[0,1],[0,2],[1,0],[1,1]],[[0,0],[0,1],[1,1],[1,2],[2,2]],[[0,0],[1,0],[2,0],[3,0],[1,1]],[[0,0],[1,0],[2,0],[0,1],[0,2]],[[0,0],[1,0],[1,1],[2,1],[1,2]],[[0,0],[0,1],[1,1],[2,1],[2,2]],[[0,0],[1,0],[2,0],[1,1],[1,2]],[[0,0],[1,0],[2,0],[2,1],[3,1]],[[0,0],[1,0],[1,1],[1,2],[2,2]],[[0,0],[0,1],[1,1],[1,2],[2,1]]];
-let room=null,state=null,token=localStorage.getItem('blokus_token')||crypto.randomUUID(),selected=null,ori=0,flipped=false,hover=null,poll=null,cpuTimer=null,lastRenderSig='',cpuScheduledKey='';
+let room=null,state=null,token=localStorage.getItem('blokus_token')||crypto.randomUUID(),selected=null,ori=0,flipped=false,hover=null,poll=null,cpuTimer=null,lastRenderSig='',cpuScheduledKey='',pinHideTimer=null,pingSocket=null,pingReconnectTimer=null,shownPingIds=new Set();
 const $=s=>document.querySelector(s); const nameEl=$('#name'); nameEl.value=localStorage.getItem('boardgamePlayerName')||'';
 function newActionId(){return token+'-'+Date.now().toString(36)+'-'+crypto.randomUUID()} 
 async function api(path,opt={}){if(!SERVER_URL)throw Error('SERVER_URLが未設定です');let r=await fetch(SERVER_URL+path,{headers:{'content-type':'application/json'},...opt});let j;try{j=await r.json()}catch{throw Error('サーバー応答が不正です')}if(!r.ok)throw Error(j.error||('HTTP '+r.status));return j}
@@ -164,7 +164,13 @@ window.showPlayerPieces=playerToken=>{
 };
 window.closePlayerPieces=()=>{$('#modal').hidden=true};
 function renderResult(){if(!$('#modal').hidden)return;$('#modal').hidden=false;let rows=state.results.map((r,i)=>`<div class="resultRow rank${i+1}"><span class="rank">${i+1}</span><strong>${r.name}</strong><b>${r.score}<small>点</small></b></div>`).join('');$('#modalBody').innerHTML=`<div class="resultCard"><div class="resultEyebrow">GAME RESULT</div><h2>対局終了</h2><div class="resultRows">${rows}</div><div class="resultActions"><button class="subResult" onclick="closeResult()">最終盤面を見る</button><button class="mainResult" onclick="backLobby()">ロビーへ戻る</button></div></div>`}window.closeResult=()=>$('#modal').hidden=true;window.backLobby=async()=>act('backLobby');
-window.leaveRoom=async()=>{try{await act('leave')}catch{}closePingSocket();room=null;state=null;clearInterval(poll);hideScreens();$('#lobby').hidden=false;refreshRooms()};$('#leave').onclick=leaveRoom;$('#roomLeave').onclick=leaveRoom;$('#addCpuBtn').onclick=addCpu;$('#startBtn').onclick=startGame;
+window.leaveRoom=async()=>{
+  let leavingRoom=room;
+  closePingSocket();clearInterval(poll);poll=null;clearTimeout(cpuTimer);cpuTimer=null;
+  try{if(leavingRoom&&state)await act('leave')}catch{}
+  room=null;state=null;selected=null;hover=null;pinMode=false;lastRenderSig='';cpuScheduledKey='';
+  hideScreens();$('#lobby').hidden=false;drawRooms(roomFallbacks());refreshRooms();
+};$('#leave').onclick=leaveRoom;$('#roomLeave').onclick=leaveRoom;$('#addCpuBtn').onclick=addCpu;$('#startBtn').onclick=startGame;
 drawRooms(roomFallbacks());refreshRooms();setInterval(()=>{if(!room)refreshRooms()},3000);
 let lastGameTouchEnd=0;
 $('#game').addEventListener('touchend',e=>{

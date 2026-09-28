@@ -108,3 +108,23 @@
   #pieceSide .controls #pinBtn{display:block!important;height:36px!important;font-size:12px!important}
   .viewPieceGrid{grid-template-columns:repeat(4,1fr)}
 }
+
+/* v0.6.1 smartphone fit */
+@media (max-width:760px){
+  main.gameLayout{
+    grid-template-rows:54px 40px minmax(0,1fr) 126px!important;
+  }
+  #boardWrap{
+    width:100%!important;height:100%!important;
+    min-height:0!important;box-sizing:border-box!important;
+    padding:3px!important;overflow:hidden!important;
+  }
+  #board{
+    width:min(calc(100vw - 12px),calc(100dvh - 264px))!important;
+    max-width:calc(100vw - 12px)!important;
+    max-height:calc(100dvh - 264px)!important;
+    aspect-ratio:1/1!important;
+    box-sizing:border-box!important;
+  }
+  #pieceSide>h3{display:none!important}
+}
