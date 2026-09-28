@@ -64,6 +64,40 @@ function clearPreview(){document.querySelectorAll('#board .cell.previewOk,#board
 function drawPreview(x,y){clearPreview();if(selected==null)return;let cur=state.turns[state.turnIndex];if(cur?.token!==token)return;let pts=transforms(PIECES[selected]),cells=pts.map(([dx,dy])=>[x+dx,y+dy]),ok=localLegal(cur.color,selected,cells);for(let [cx,cy] of cells){let c=$(`.cell[data-x="${cx}"][data-y="${cy}"]`);if(!c)continue;c.classList.add(ok?'previewOk':'previewGhost');if(ok)c.style.setProperty('--preview-color',cssColor(cur.color))}}
 function preview(x,y){hover=[x,y];drawPreview(x,y);updateConfirm()}
 async function place(x,y){if(selected==null)return;try{await act('place',{piece:selected,cells:transforms(PIECES[selected]).map(([dx,dy])=>[x+dx,y+dy])});selected=null;hover=null;updateConfirm()}catch(e){toast(e.message)}}
-const boardEl=$('#board');boardEl.addEventListener('pointermove',e=>{if(isMobileGame())return;let c=e.target.closest('.cell');if(c&&boardEl.contains(c))preview(+c.dataset.x,+c.dataset.y)});boardEl.addEventListener('pointerup',e=>{let cell=e.target.closest('.cell');if(!cell||!boardEl.contains(cell)||selected==null)return;e.preventDefault();let x=+cell.dataset.x,y=+cell.dataset.y;if(isMobileGame())preview(x,y);else place(x,y)});function renderResult(){if(!$('#modal').hidden)return;$('#modal').hidden=false;let rows=state.results.map((r,i)=>`<div class="resultRow rank${i+1}"><span class="rank">${i+1}</span><strong>${r.name}</strong><b>${r.score}<small>点</small></b></div>`).join('');$('#modalBody').innerHTML=`<div class="resultCard"><div class="resultEyebrow">GAME RESULT</div><h2>対局終了</h2><div class="resultRows">${rows}</div><div class="resultActions"><button class="subResult" onclick="closeResult()">最終盤面を見る</button><button class="mainResult" onclick="backLobby()">ロビーへ戻る</button></div></div>`}window.closeResult=()=>$('#modal').hidden=true;window.backLobby=async()=>act('backLobby');
+const boardEl=$('#board');
+let boardPan=null,boardPanX=0,boardPanY=0,lastBoardTap=0;
+function applyBoardPan(){if(isMobileGame())boardEl.style.transform=`translate3d(${boardPanX}px,${boardPanY}px,0)`}
+boardEl.addEventListener('pointerdown',e=>{
+  if(!isMobileGame())return;
+  boardPan={id:e.pointerId,startX:e.clientX,startY:e.clientY,baseX:boardPanX,baseY:boardPanY,moved:false};
+  boardEl.setPointerCapture?.(e.pointerId);
+});
+boardEl.addEventListener('pointermove',e=>{
+  if(isMobileGame()){
+    if(!boardPan||boardPan.id!==e.pointerId)return;
+    let dx=e.clientX-boardPan.startX,dy=e.clientY-boardPan.startY;
+    if(Math.hypot(dx,dy)>7)boardPan.moved=true;
+    if(boardPan.moved){boardPanX=boardPan.baseX+dx;boardPanY=boardPan.baseY+dy;applyBoardPan();e.preventDefault()}
+    return;
+  }
+  let cell=e.target.closest('.cell');if(cell&&boardEl.contains(cell))preview(+cell.dataset.x,+cell.dataset.y)
+});
+boardEl.addEventListener('pointerup',e=>{
+  if(isMobileGame()){
+    if(!boardPan||boardPan.id!==e.pointerId)return;
+    let moved=boardPan.moved;boardPan=null;
+    try{boardEl.releasePointerCapture?.(e.pointerId)}catch{}
+    e.preventDefault();
+    if(moved)return;
+    let now=Date.now();if(now-lastBoardTap<350){lastBoardTap=0;return}lastBoardTap=now;
+    let cell=document.elementFromPoint(e.clientX,e.clientY)?.closest('.cell');
+    if(!cell||!boardEl.contains(cell)||selected==null)return;
+    preview(+cell.dataset.x,+cell.dataset.y);
+    return;
+  }
+  let cell=e.target.closest('.cell');if(!cell||!boardEl.contains(cell)||selected==null)return;e.preventDefault();place(+cell.dataset.x,+cell.dataset.y)
+});
+boardEl.addEventListener('pointercancel',e=>{if(boardPan&&boardPan.id===e.pointerId)boardPan=null});
+window.addEventListener('resize',()=>{if(!isMobileGame()){boardPanX=boardPanY=0;boardEl.style.transform=''}else applyBoardPan()});function renderResult(){if(!$('#modal').hidden)return;$('#modal').hidden=false;let rows=state.results.map((r,i)=>`<div class="resultRow rank${i+1}"><span class="rank">${i+1}</span><strong>${r.name}</strong><b>${r.score}<small>点</small></b></div>`).join('');$('#modalBody').innerHTML=`<div class="resultCard"><div class="resultEyebrow">GAME RESULT</div><h2>対局終了</h2><div class="resultRows">${rows}</div><div class="resultActions"><button class="subResult" onclick="closeResult()">最終盤面を見る</button><button class="mainResult" onclick="backLobby()">ロビーへ戻る</button></div></div>`}window.closeResult=()=>$('#modal').hidden=true;window.backLobby=async()=>act('backLobby');
 window.leaveRoom=async()=>{try{await act('leave')}catch{}room=null;state=null;clearInterval(poll);hideScreens();$('#lobby').hidden=false;refreshRooms()};$('#leave').onclick=leaveRoom;$('#roomLeave').onclick=leaveRoom;$('#addCpuBtn').onclick=addCpu;$('#startBtn').onclick=startGame;
 refreshRooms();setInterval(()=>{if(!room)refreshRooms()},3000);
