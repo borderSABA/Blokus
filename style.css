@@ -149,3 +149,16 @@
 #gamebar #turnText{margin-left:auto;font-size:13px;white-space:nowrap}
 @media(max-width:760px){#gamebar #turnText{font-size:10px;max-width:42vw;overflow:hidden;text-overflow:ellipsis}}
 #board.trigonBoard .triBoardPin{stroke:#fff;stroke-width:.07;vector-effect:non-scaling-stroke;pointer-events:none}
+
+/* v0.7.2: isolate Trigon SVG from legacy square-cell/piece CSS */
+#board.trigonBoard svg.trigonSvg polygon.triCell{position:static!important;width:auto!important;height:auto!important;transform:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell{fill:#f8fafb!important;stroke:#c7cfd5!important;stroke-width:.035!important;opacity:1!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.blue{fill:#2d7dd2!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.yellow{fill:#f0c83d!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.red{fill:#d84a4a!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.green{fill:#42a66c!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.previewGhost{fill:#111820!important;opacity:.72!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.previewOk{fill:var(--preview-color)!important;opacity:.58!important}
+#board.trigonBoard svg.trigonSvg polygon.triStart{stroke:#202830!important;stroke-width:.11!important}
+.piece .triPieceSvg,.modalPiece .triPieceSvg{background:transparent!important;border:0!important;box-shadow:none!important}
+.piece .triPieceSvg polygon,.modalPiece .triPieceSvg polygon{fill:currentColor!important;stroke:currentColor!important;stroke-width:.03!important}
