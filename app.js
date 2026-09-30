@@ -124,10 +124,10 @@ function renderPieces(){
 function isMobileGame(){return matchMedia('(max-width:760px)').matches}
 function updateConfirm(){let b=$('#confirm');if(!b)return;let cur=state?.turns?.[state.turnIndex],ok=false;if(selected!=null&&hover&&cur?.token===token)ok=localLegal(cur.color,selected,placementCells(...hover));b.disabled=!ok}
 window.selPiece=i=>{selected=i;ori=0;flipped=false;document.querySelectorAll('#pieces .piece').forEach(b=>b.classList.remove('sel'));let btn=[...document.querySelectorAll('#pieces .piece')].find(b=>b.getAttribute('onclick')===`selPiece(${i})`);if(btn)btn.classList.add('sel');if(hover)drawPreview(...hover);updateConfirm()};$('#rot').onclick=()=>{ori=(ori+1)%(state?.variant==='trigon'?6:4);if(hover)preview(...hover);updateConfirm()};$('#flip').onclick=()=>{flipped=!flipped;if(hover)preview(...hover);updateConfirm()};$('#pinBtn').onclick=()=>{pinMode=!pinMode;$('#pinBtn').classList.toggle('pinActive',pinMode);toast(pinMode?'盤面のピンを挿す位置を選択':'ピンをキャンセル')};$('#confirm').onclick=()=>{if(selected!=null&&hover&&!$('#confirm').disabled)place(...hover)};
-function clearPreview(){document.querySelectorAll('#board .cell.previewOk,#board .cell.previewGhost,#board .triCell.previewOk,#board .triCell.previewGhost').forEach(c=>{c.classList.remove('previewOk','previewGhost');c.style.removeProperty('--preview-color')})}
+function clearPreview(){document.querySelectorAll('#board .cell.previewOk,#board .cell.previewGhost,#board .triCell.previewOk,#board .triCell.previewGhost').forEach(c=>{c.classList.remove('previewOk','previewGhost');c.style.removeProperty('--preview-color');if(c.classList.contains('triCell')){c.style.removeProperty('fill');c.style.removeProperty('opacity')}})}
 function placementCells(x,y,o=null){if(state.variant==='trigon')return triTransform(TRIGON_PIECES[selected]).map(([i,j,z])=>[x+i,y+j,z]);return transforms(PIECES[selected]).map(([dx,dy])=>[x+dx,y+dy])}
 function findCell(c){return state.variant==='trigon'?document.querySelector(`.triCell[data-x="${c[0]}"][data-y="${c[1]}"][data-o="${c[2]}"]`):document.querySelector(`.cell[data-x="${c[0]}"][data-y="${c[1]}"]`)}
-function drawPreview(x,y,o=null){clearPreview();if(selected==null)return;let cur=state.turns[state.turnIndex];if(cur?.token!==token)return;let cells=placementCells(x,y,o),ok=localLegal(cur.color,selected,cells);for(let q of cells){let el=findCell(q);if(!el)continue;el.classList.add(ok?'previewOk':'previewGhost');if(ok)el.style.setProperty('--preview-color',cssColor(cur.color))}}
+function drawPreview(x,y,o=null){clearPreview();if(selected==null)return;let cur=state.turns[state.turnIndex];if(cur?.token!==token)return;let cells=placementCells(x,y,o),ok=localLegal(cur.color,selected,cells);for(let q of cells){let el=findCell(q);if(!el)continue;el.classList.add(ok?'previewOk':'previewGhost');if(state.variant==='trigon'){el.style.setProperty('fill',ok?cssColor(cur.color):'#111820','important');el.style.setProperty('opacity',ok?'.62':'.78','important')}else if(ok)el.style.setProperty('--preview-color',cssColor(cur.color))}}
 function preview(x,y,o=null){hover=state.variant==='trigon'?[x,y,o]:[x,y];drawPreview(...hover);updateConfirm()}
 async function place(x,y,o=null){if(selected==null)return;try{await act('place',{piece:selected,cells:placementCells(x,y,o)});selected=null;hover=null;updateConfirm()}catch(e){toast(e.message)}}
 const boardEl=$('#board');
@@ -194,12 +194,12 @@ window.showPlayerPieces=playerToken=>{
 };
 window.closePlayerPieces=()=>{$('#modal').hidden=true};
 function renderResult(){if(!$('#modal').hidden)return;$('#modal').hidden=false;let rows=state.results.map((r,i)=>`<div class="resultRow rank${i+1}"><span class="rank">${i+1}</span><strong>${r.name}</strong><b>${r.score}<small>点</small></b></div>`).join('');$('#modalBody').innerHTML=`<div class="resultCard"><div class="resultEyebrow">GAME RESULT</div><h2>対局終了</h2><div class="resultRows">${rows}</div><div class="resultActions"><button class="subResult" onclick="closeResult()">最終盤面を見る</button><button class="mainResult" onclick="backLobby()">ロビーへ戻る</button></div></div>`}window.closeResult=()=>$('#modal').hidden=true;window.backLobby=async()=>act('backLobby');
-window.leaveRoom=async()=>{
-  let leavingRoom=room;
-  closePingSocket();clearInterval(poll);poll=null;clearTimeout(cpuTimer);cpuTimer=null;
-  try{if(leavingRoom&&state)await act('leave')}catch{}
+window.leaveRoom=()=>{
+  let leavingRoom=room,leavingState=state,leaveToken=token;
+  closePingSocket();clearInterval(poll);poll=null;clearInterval(turnClockTimer);turnClockTimer=null;clearTimeout(cpuTimer);cpuTimer=null;
   room=null;state=null;selected=null;hover=null;pinMode=false;lastRenderSig='';cpuScheduledKey='';
   hideScreens();$('#lobby').hidden=false;drawRooms(roomFallbacks());refreshRooms();
+  if(leavingRoom&&leavingState)api('/room/'+leavingRoom+'/action',{method:'POST',body:JSON.stringify({token:leaveToken,type:'leave',actionId:newActionId()})}).catch(()=>{});
 };$('#leave').onclick=leaveRoom;$('#roomLeave').onclick=leaveRoom;$('#addCpuBtn').onclick=addCpu;$('#startBtn').onclick=startGame;
 drawRooms(roomFallbacks());refreshRooms();setInterval(()=>{if(!room)refreshRooms()},3000);
 let lastGameTouchEnd=0;

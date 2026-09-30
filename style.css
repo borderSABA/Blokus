@@ -162,3 +162,10 @@
 #board.trigonBoard svg.trigonSvg polygon.triStart{stroke:#202830!important;stroke-width:.11!important}
 .piece .triPieceSvg,.modalPiece .triPieceSvg{background:transparent!important;border:0!important;box-shadow:none!important}
 .piece .triPieceSvg polygon,.modalPiece .triPieceSvg polygon{fill:currentColor!important;stroke:currentColor!important;stroke-width:.03!important}
+
+/* v0.7.3 Trigon visibility */
+#board.trigonBoard{background:#d7dde2!important;border:4px solid #4f5d68!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell{fill:#f7f9fa!important;stroke:#9aa7b1!important;stroke-width:1px!important;vector-effect:non-scaling-stroke!important;shape-rendering:geometricPrecision}
+#board.trigonBoard svg.trigonSvg polygon.triStart{stroke:#202830!important;stroke-width:2px!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.previewGhost{fill:#111820!important;opacity:.78!important}
+#board.trigonBoard svg.trigonSvg polygon.triCell.previewOk{opacity:.62!important}
