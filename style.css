@@ -135,3 +135,20 @@
 #gameStatus strong{font-size:14px;font-weight:900}
 #turnTimer{margin-top:3px;font-size:11px;font-weight:900;color:#596773;white-space:nowrap}
 @media(max-width:760px){#gameStatus strong{font-size:12px}#turnTimer{font-size:10px;margin-top:2px}}
+
+/* v0.7.0 Blokus Trigon */
+#board.trigonBoard{position:relative;display:block!important;overflow:visible;background:#dfe4e8;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);border:4px solid #596773}
+#board.trigonBoard .triCell{position:absolute;width:5.75%;height:6.75%;transform:translate(-50%,-50%);border:0;box-sizing:border-box;background:#f7f9fa;filter:drop-shadow(0 0 .35px #667);cursor:pointer}
+#board.trigonBoard .triUp{clip-path:polygon(50% 0,100% 100%,0 100%)}
+#board.trigonBoard .triDown{clip-path:polygon(0 0,100% 0,50% 100%)}
+#board.trigonBoard .triCell.blue{background:#2d7dd2}#board.trigonBoard .triCell.yellow{background:#f0c83d}#board.trigonBoard .triCell.red{background:#d84a4a}#board.trigonBoard .triCell.green{background:#42a66c}
+#board.trigonBoard .triCell.previewGhost{background:#15191dcc!important}
+#board.trigonBoard .triCell.previewOk{background:var(--preview-color)!important;opacity:.58}
+#board.trigonBoard .triStart{box-shadow:inset 0 0 0 3px #111;filter:brightness(.88)}
+.triMini{display:flex;flex-wrap:wrap;align-content:center;justify-content:center;width:50px;min-height:34px;gap:1px;background:transparent!important}
+.triMini i{width:10px;height:9px;clip-path:polygon(50% 0,100% 100%,0 100%);background:currentColor}
+.triMini.blue{color:#2d7dd2}.triMini.yellow{color:#d4a900}.triMini.red{color:#d84a4a}.triMini.green{color:#42a66c}
+@media(max-width:760px){#board.trigonBoard{width:min(calc(100vw - 12px),calc(100dvh - 264px))!important;height:auto!important;aspect-ratio:1.1547/1!important}}
+
+#gamebar #turnText{margin-left:auto;font-size:13px;white-space:nowrap}
+@media(max-width:760px){#gamebar #turnText{font-size:10px;max-width:42vw;overflow:hidden;text-overflow:ellipsis}}
