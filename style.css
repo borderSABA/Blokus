@@ -178,3 +178,11 @@
   stroke-linejoin:round;
 }
 #board.trigonBoard .triStartMark text{font-family:Arial,"Noto Sans JP",sans-serif;paint-order:stroke;stroke:#fff;stroke-width:.025}
+
+/* v0.7.5: every unit triangle uses the same visual scale */
+.piece .triPieceSvg polygon,.modalPiece .triPieceSvg polygon{
+  stroke:#17222b!important;
+  stroke-width:.085!important;
+  vector-effect:non-scaling-stroke;
+  stroke-linejoin:round;
+}
