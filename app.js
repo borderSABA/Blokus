@@ -99,7 +99,9 @@ function triPoint(i,j){return [i+j/2,j*Math.sqrt(3)/2]}
 function triPolygon(c){return triVerts(c).map(([i,j])=>triPoint(i,j))}
 function triSvgGeometry(cells,pad=0.12){let polys=cells.map(triPolygon),pts=polys.flat(),minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1]));return{polys,minx:minx-pad,miny:miny-pad,w:(maxx-minx||1)+pad*2,h:(maxy-miny||1)+pad*2}}
 function triPieceSvg(shape,color){let g=triSvgGeometry(shape,.10),polys=g.polys.map(p=>`<polygon points="${p.map(q=>q.join(',')).join(' ')}"></polygon>`).join('');return `<svg class="triPieceSvg ${color}" viewBox="${g.minx} ${g.miny} ${g.w} ${g.h}" preserveAspectRatio="xMidYMid meet">${polys}</svg>`}
-function renderTrigonBoard(){let cells=(state.trigonCells||TRIGON_BOARD).filter(q=>triPlayable(q)),allPolys=cells.map(triPolygon),pts=allPolys.flat(),minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1])),pad=.08,occupied=state.board||{},starts={};for(let t of(state.turns||[]))if((state.used?.[t.color]||[]).length===0)starts[t.start.join(',')]=t.color;let body=cells.map((cell,idx)=>{let[i,j,o]=cell,k=cell.join(','),col=occupied[k]||'',st=starts[k]||'',points=allPolys[idx].map(q=>q.join(',')).join(' ');return `<polygon class="triCell ${col} ${st?'triStart start-'+st:''}" points="${points}" data-x="${i}" data-y="${j}" data-o="${o}"></polygon>`}).join('');$('#board').innerHTML=`<svg class="trigonSvg" viewBox="${minx-pad} ${miny-pad} ${maxx-minx+pad*2} ${maxy-miny+pad*2}" preserveAspectRatio="xMidYMid meet">${body}</svg>`}
+function renderTrigonBoard(){let cells=(state.trigonCells||TRIGON_BOARD).filter(q=>triPlayable(q)),allPolys=cells.map(triPolygon),pts=allPolys.flat(),minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1])),pad=.08,occupied=state.board||{},starts={};for(let t of(state.turns||[]))if((state.used?.[t.color]||[]).length===0)starts[t.start.join(',')]=t.color;let body=cells.map((cell,idx)=>{let[i,j,o]=cell,k=cell.join(','),col=occupied[k]||'',st=starts[k]||'',points=allPolys[idx].map(q=>q.join(',')).join(' ');return `<polygon class="triCell ${col}" points="${points}" data-x="${i}" data-y="${j}" data-o="${o}"></polygon>`}).join('');
+ let marks=Object.entries(starts).map(([k,col])=>{let cell=k.split(',').map(Number),poly=triPolygon(cell),cx=poly.reduce((z,q)=>z+q[0],0)/3,cy=poly.reduce((z,q)=>z+q[1],0)/3,label=COLORS[col]||col;return `<g class="triStartMark" pointer-events="none"><circle cx="${cx}" cy="${cy}" r=".31" fill="#fff" stroke="${cssColor(col)}" stroke-width=".09"></circle><text x="${cx}" y="${cy+.09}" text-anchor="middle" font-size=".27" font-weight="900" fill="${cssColor(col)}">${label}</text></g>`}).join('');
+ $('#board').innerHTML=`<svg class="trigonSvg" viewBox="${minx-pad} ${miny-pad} ${maxx-minx+pad*2} ${maxy-miny+pad*2}" preserveAspectRatio="xMidYMid meet">${body}${marks}</svg>`}
 function pieceHtml(shape,color){if(state?.variant==='trigon')return triPieceSvg(shape,color);let maxx=Math.max(...shape.map(p=>p[0])),maxy=Math.max(...shape.map(p=>p[1])),set=new Set(shape.map(p=>p.join(','))),h=`<span class="miniPiece" style="grid-template-columns:repeat(${maxx+1},12px);grid-template-rows:repeat(${maxy+1},12px)">`;for(let y=0;y<=maxy;y++)for(let x=0;x<=maxx;x++)h+=set.has(x+','+y)?`<i class="miniCell ${color}"></i>`:'<i></i>';return h+'</span>'}
 function localLegal(color,piece,cells){if(state?.variant==='trigon'){if(!color||piece==null||new Set(cells.map(c=>c.join(','))).size!==cells.length)return false;for(let c of cells)if(!triPlayable(c)||state.board[c.join(',')])return false;let first=(state.used[color]||[]).length===0,t=state.turns.find(t=>t.color===color);if(first&&!cells.some(c=>c.join(',')===t.start.join(',')))return false;let own=Object.entries(state.board).filter(([k,v])=>v===color).map(([k])=>k.split(',').map(Number)),corner=false;for(let c of cells){let cv=triVerts(c);for(let oc of own){let ov=triVerts(oc),common=cv.filter(v=>ov.some(q=>q[0]===v[0]&&q[1]===v[1])).length;if(common>=2)return false;if(common===1)corner=true}}return first||corner}if(!color||piece==null)return false;let set=new Set(cells.map(p=>p.join(',')));if(set.size!==cells.length)return false;for(let [x,y] of cells)if(x<0||y<0||x>=state.size||y>=state.size||state.board[y][x])return false;let first=(state.used[color]||[]).length===0;if(first){let t=state.turns.find(t=>t.color===color);if(!t||!cells.some(([x,y])=>x===t.start[0]&&y===t.start[1]))return false}let diag=false;for(let [x,y] of cells){for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(state.board[y+dy]?.[x+dx]===color)return false;for(let [dx,dy] of [[1,1],[1,-1],[-1,1],[-1,-1]])if(state.board[y+dy]?.[x+dx]===color)diag=true}return first||diag}
 function renderPieces(){
@@ -144,7 +146,7 @@ function previewFromPoint(x,y){
   preview(+cell.dataset.x,+cell.dataset.y,cell.dataset.o==null?null:+cell.dataset.o);
 }
 boardEl.addEventListener('pointerdown',e=>{
-  let cell=e.target.closest('.cell');
+  let cell=e.target.closest('.cell,.triCell');
   if(pinMode&&cell&&boardEl.contains(cell)){e.preventDefault();sendPinCell(cell);return}
   if(!isMobileGame()||selected==null)return;
   if(!cell||!boardEl.contains(cell))return;
@@ -160,7 +162,7 @@ boardEl.addEventListener('pointermove',e=>{
     previewFromPoint(e.clientX,e.clientY);
     return;
   }
-  let cell=e.target.closest('.cell');
+  let cell=e.target.closest('.cell,.triCell');
   if(cell&&boardEl.contains(cell))preview(+cell.dataset.x,+cell.dataset.y,cell.dataset.o==null?null:+cell.dataset.o)
 });
 boardEl.addEventListener('pointerup',e=>{
@@ -172,7 +174,7 @@ boardEl.addEventListener('pointerup',e=>{
     try{boardEl.releasePointerCapture?.(e.pointerId)}catch{}
     return;
   }
-  let cell=e.target.closest('.cell');
+  let cell=e.target.closest('.cell,.triCell');
   if(!cell||!boardEl.contains(cell)||selected==null)return;
   e.preventDefault();
   place(+cell.dataset.x,+cell.dataset.y,cell.dataset.o==null?null:+cell.dataset.o)
