@@ -98,7 +98,7 @@ function cssColor(c){return({blue:'#2d7dd2',yellow:'#f0c83d',red:'#d84a4a',green
 function triPoint(i,j){return [i+j/2,j*Math.sqrt(3)/2]}
 function triPolygon(c){return triVerts(c).map(([i,j])=>triPoint(i,j))}
 function triSvgGeometry(cells,pad=0.12){let polys=cells.map(triPolygon),pts=polys.flat(),minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1]));return{polys,minx:minx-pad,miny:miny-pad,w:(maxx-minx||1)+pad*2,h:(maxy-miny||1)+pad*2}}
-function triPieceSvg(shape,color){let polys=shape.map(triPolygon),pts=polys.flat(),cx=(Math.min(...pts.map(p=>p[0]))+Math.max(...pts.map(p=>p[0])))/2,cy=(Math.min(...pts.map(p=>p[1]))+Math.max(...pts.map(p=>p[1])))/2,boxW=6.8,boxH=5.2;let body=polys.map(p=>`<polygon points="${p.map(([x,y])=>`${x-cx},${y-cy}`).join(' ')}"></polygon>`).join('');return `<svg class="triPieceSvg ${color}" viewBox="${-boxW/2} ${-boxH/2} ${boxW} ${boxH}" preserveAspectRatio="xMidYMid meet">${body}</svg>`}
+function triPieceSvg(shape,color){let polys=shape.map(triPolygon),pts=polys.flat(),cx=(Math.min(...pts.map(p=>p[0]))+Math.max(...pts.map(p=>p[0])))/2,cy=(Math.min(...pts.map(p=>p[1]))+Math.max(...pts.map(p=>p[1])))/2,boxW=3.4,boxH=2.6;let body=polys.map(p=>`<polygon points="${p.map(([x,y])=>`${x-cx},${y-cy}`).join(' ')}"></polygon>`).join('');return `<svg class="triPieceSvg ${color}" viewBox="${-boxW/2} ${-boxH/2} ${boxW} ${boxH}" preserveAspectRatio="xMidYMid meet">${body}</svg>`}
 function renderTrigonBoard(){let cells=(state.trigonCells||TRIGON_BOARD).filter(q=>triPlayable(q)),allPolys=cells.map(triPolygon),pts=allPolys.flat(),minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1])),pad=.08,occupied=state.board||{},starts={};for(let t of(state.turns||[]))if((state.used?.[t.color]||[]).length===0)starts[t.start.join(',')]=t.color;let body=cells.map((cell,idx)=>{let[i,j,o]=cell,k=cell.join(','),col=occupied[k]||'',st=starts[k]||'',points=allPolys[idx].map(q=>q.join(',')).join(' ');return `<polygon class="triCell ${col}" points="${points}" data-x="${i}" data-y="${j}" data-o="${o}"></polygon>`}).join('');
  let marks=Object.entries(starts).map(([k,col])=>{let cell=k.split(',').map(Number),poly=triPolygon(cell),cx=poly.reduce((z,q)=>z+q[0],0)/3,cy=poly.reduce((z,q)=>z+q[1],0)/3,label=COLORS[col]||col;return `<g class="triStartMark" pointer-events="none"><circle cx="${cx}" cy="${cy}" r=".31" fill="#fff" stroke="${cssColor(col)}" stroke-width=".09"></circle><text x="${cx}" y="${cy+.09}" text-anchor="middle" font-size=".27" font-weight="900" fill="${cssColor(col)}">${label}</text></g>`}).join('');
  $('#board').innerHTML=`<svg class="trigonSvg" viewBox="${minx-pad} ${miny-pad} ${maxx-minx+pad*2} ${maxy-miny+pad*2}" preserveAspectRatio="xMidYMid meet">${body}${marks}</svg>`}
@@ -131,7 +131,19 @@ function placementCells(x,y,o=null){if(state.variant==='trigon')return triTransf
 function findCell(c){return state.variant==='trigon'?document.querySelector(`.triCell[data-x="${c[0]}"][data-y="${c[1]}"][data-o="${c[2]}"]`):document.querySelector(`.cell[data-x="${c[0]}"][data-y="${c[1]}"]`)}
 function drawPreview(x,y,o=null){clearPreview();if(selected==null)return;let cur=state.turns[state.turnIndex];if(cur?.token!==token)return;let cells=placementCells(x,y,o),ok=localLegal(cur.color,selected,cells);for(let q of cells){let el=findCell(q);if(!el)continue;el.classList.add(ok?'previewOk':'previewGhost');if(state.variant==='trigon'){el.style.setProperty('fill',ok?cssColor(cur.color):'#111820','important');el.style.setProperty('opacity',ok?'.62':'.78','important')}else if(ok)el.style.setProperty('--preview-color',cssColor(cur.color))}}
 function preview(x,y,o=null){hover=state.variant==='trigon'?[x,y,o]:[x,y];drawPreview(...hover);updateConfirm()}
-async function place(x,y,o=null){if(selected==null)return;try{await act('place',{piece:selected,cells:placementCells(x,y,o)});selected=null;hover=null;updateConfirm()}catch(e){toast(e.message)}}
+async function place(x,y,o=null){
+ if(selected==null)return;
+ let cur=state?.turns?.[state.turnIndex],piece=selected,cells=placementCells(x,y,o);
+ if(!cur||cur.token!==token||!localLegal(cur.color,piece,cells))return;
+ let snapshot=structuredClone(state);
+ try{
+   if(state.variant==='trigon'){for(let q of cells)state.board[q.join(',')]=cur.color}else{for(let [cx,cy] of cells)state.board[cy][cx]=cur.color}
+   state.used[cur.color]=[...(state.used[cur.color]||[]),piece];
+   state.history=[...(state.history||[]),{turn:(state.history?.length||0)+1,color:cur.color,piece,cells}];
+   selected=null;hover=null;lastRenderSig='';render();
+   await act('place',{piece,cells});
+ }catch(e){state=snapshot;lastRenderSig='';render();toast(e.message)}
+}
 const boardEl=$('#board');
 let mobilePieceDrag=null,pinMode=false;
 function cellFromPoint(x,y){
